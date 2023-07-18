@@ -6,23 +6,19 @@ namespace SpotifyCheck.Core;
 
 public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult> : IDisposable,
     IAbstractMessageHandler<TMessage, TDoneResult, TFailResult>
-    where TMessage : AbstractMessage<TDoneResult, TFailResult> where TDoneResult : class where TFailResult : class
+    where TMessage : AbstractMessage<TDoneResult, TFailResult>
 {
     private readonly CancellationTokenSource _cancellationTokenSource;
-    private readonly ILogger<AbstractMessageHandler<TMessage, TDoneResult, TFailResult>> _loggger;
+    private readonly ILogger<AbstractMessageHandler<TMessage, TDoneResult, TFailResult>> _logger;
     private readonly ConcurrentQueue<TMessage> _messages;
 
     protected int DelayMs = 0;
 
-    protected AbstractMessageHandler(
-        ILogger<AbstractMessageHandler<TMessage, TDoneResult, TFailResult>> loggger,
-        ConcurrentQueue<TMessage> messages,
-        CancellationTokenSource cancellationTokenSource
-    )
+    protected AbstractMessageHandler(ILogger<AbstractMessageHandler<TMessage, TDoneResult, TFailResult>> logger)
     {
-        _loggger = loggger;
-        _messages = messages;
-        _cancellationTokenSource = cancellationTokenSource;
+        _logger = logger;
+        _messages = new ConcurrentQueue<TMessage>();
+        _cancellationTokenSource = new CancellationTokenSource();
         GetListenerThread().Start();
     }
 
@@ -41,7 +37,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
         return new Thread(
             async () =>
             {
-                _loggger.LogTrace("Queue {0} listener started", GetType().Name);
+                _logger.LogTrace("Queue {0} listener started", GetType().Name);
 
                 while (true)
                 {
@@ -49,7 +45,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
                     if (!dequeued || message == null) continue;
                     if (_cancellationTokenSource.Token.IsCancellationRequested) return;
                     var timer = new Stopwatch();
-                    _loggger.LogTrace("Message received {0}. Queue {2}", message.MessageId, GetType().Name);
+                    _logger.LogTrace("Message received {0}. Queue {2}", message.MessageId, GetType().Name);
                     timer.Start();
 
                     try
@@ -63,7 +59,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
 
                     timer.Stop();
 
-                    _loggger.LogTrace(
+                    _logger.LogTrace(
                         "Completed message processing {0} at {1} ms. Queue: {2}", message.MessageId, timer.ElapsedMilliseconds,
                         GetType().Name
                     );
@@ -78,7 +74,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
 
     protected virtual void HandleError(Guid messageId, Exception exception)
     {
-        _loggger.LogError(
+        _logger.LogError(
             "Message {0}, exception type {1}, exception text {2}", messageId, exception.GetType().Name, exception.Message
         );
 
