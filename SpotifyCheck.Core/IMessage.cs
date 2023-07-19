@@ -1,8 +1,8 @@
 namespace SpotifyCheck.Core;
 
-public interface IMessage<TDoneResult, TFailResult>
+public interface IMessage<in TDoneResult, in TFailResult>
 {
     Guid MessageId { get; }
-    Action<TDoneResult> Done { get; }
-    Action<TFailResult> Fail { get; }
+    Action<TDoneResult> OnDone { get; }
+    Action<TFailResult>? OnFail { get; }
 }

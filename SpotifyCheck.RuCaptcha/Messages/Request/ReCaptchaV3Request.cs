@@ -3,7 +3,7 @@ using SpotifyCheck.RuCaptcha.Models;
 
 namespace SpotifyCheck.RuCaptcha.Messages.Request;
 
-public class ReCaptchaV3 : AbstractRequest, ICaptcha
+public class ReCaptchaV3Request : AbstractRequest, ICaptcha
 {
     public string Method { get; } = "userrecaptcha";
     public string Version { get; } = "v3";
@@ -13,10 +13,14 @@ public class ReCaptchaV3 : AbstractRequest, ICaptcha
 
     public Proxy? Proxy { get; init; }
 
-    public override Action<SolvedCaptcha> Done { get; }
-    public override Action<bool> Fail { get; }
-
-    public ReCaptchaV3(string siteKey, string pageUrl, bool isEnterprise, Proxy? proxy = null)
+    public ReCaptchaV3Request(
+        Action<SolvedCaptchaResponse> onDone,
+        Action<bool> onFail,
+        string siteKey,
+        string pageUrl,
+        bool isEnterprise,
+        Proxy? proxy = null
+    ) : base(onDone, onFail)
     {
         SiteKey = siteKey;
         PageUrl = pageUrl;
