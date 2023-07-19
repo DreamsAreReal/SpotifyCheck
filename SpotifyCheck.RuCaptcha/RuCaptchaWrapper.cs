@@ -1,6 +1,6 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SpotifyCheck.RuCaptcha.Configuration;
+using SpotifyCheck.RuCaptcha.Exceptions;
 using SpotifyCheck.RuCaptcha.Messages.Request;
 
 namespace SpotifyCheck.RuCaptcha;
@@ -13,15 +13,14 @@ public class RuCaptchaWrapper : IDisposable
     private readonly Dictionary<string, string> _additionalParameters;
     private readonly string _additionalQuery;
     private readonly HttpClient _client;
+    private readonly RuCaptchaErrorCodes _ruCaptchaErrorCodes;
 
-    private ILogger<RuCaptchaWrapper> _logger;
-
-    public RuCaptchaWrapper(ILogger<RuCaptchaWrapper> logger, IOptions<RuCaptchaOptions> ruCaptchaOptions)
+    public RuCaptchaWrapper(IOptions<RuCaptchaOptions> ruCaptchaOptions, RuCaptchaErrorCodes ruCaptchaErrorCodes)
     {
         _client = new HttpClient();
-        _additionalParameters = new Dictionary<string, string> { { "key", ruCaptchaOptions.Value.Key }, { "json", "1" } };
-        _additionalQuery = $"&key={ruCaptchaOptions.Value.Key}&json=1";
-        _logger = logger;
+        _additionalParameters = new Dictionary<string, string> { { "key", ruCaptchaOptions.Value.Key } };
+        _additionalQuery = $"&key={ruCaptchaOptions.Value.Key}";
+        _ruCaptchaErrorCodes = ruCaptchaErrorCodes;
     }
 
     public void Dispose()
@@ -35,16 +34,21 @@ public class RuCaptchaWrapper : IDisposable
             _inboxUrl, new FormUrlEncodedContent(captcha.ToDictionary().Union(_additionalParameters))
         );
 
-        var id = await response.Content.ReadAsStringAsync();
-        // todo exceptions, json parsing
-        return id;
+        var result = await response.Content.ReadAsStringAsync();
+        _ruCaptchaErrorCodes.ThrowExceptionIfRecognizeError(result);
+        var answerTmp = result.Split('|');
+        if (answerTmp.Length < 2) throw new Exception(result);
+        return answerTmp[1];
     }
 
     public async Task<string?> GetResult(string id)
     {
         var response = await _client.GetAsync($"{_outboxUrl}?action=get&id={id}{_additionalQuery}");
         var result = await response.Content.ReadAsStringAsync();
-        // todo exceptions, json parsing
-        return result;
+        _ruCaptchaErrorCodes.ThrowExceptionIfRecognizeError(result);
+        if (result.Contains(RuCaptchaErrorCodes.CaptchaNotReady)) return null;
+        var answerTmp = result.Split('|');
+        if (answerTmp.Length < 2) throw new Exception(result);
+        return answerTmp[1];
     }
 }

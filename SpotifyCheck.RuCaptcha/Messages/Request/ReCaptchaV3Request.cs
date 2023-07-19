@@ -1,3 +1,4 @@
+using SpotifyCheck.RuCaptcha.Exceptions;
 using SpotifyCheck.RuCaptcha.Messages.Responses;
 using SpotifyCheck.RuCaptcha.Models;
 
@@ -15,7 +16,7 @@ public class ReCaptchaV3Request : AbstractRequest, ICaptcha
 
     public ReCaptchaV3Request(
         Action<SolvedCaptchaResponse> onDone,
-        Action<bool> onFail,
+        Action<ErrorType> onFail,
         string siteKey,
         string pageUrl,
         bool isEnterprise,

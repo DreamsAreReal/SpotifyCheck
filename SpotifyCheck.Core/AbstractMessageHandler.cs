@@ -54,7 +54,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
                     }
                     catch (Exception ex)
                     {
-                        HandleError(message.MessageId, ex);
+                        HandleError(message.MessageId, ex, message.OnFail);
                     }
 
                     timer.Stop();
@@ -72,12 +72,12 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
 
     protected abstract Task Handle(TMessage message, CancellationToken cancellationToken);
 
-    protected virtual void HandleError(Guid messageId, Exception exception)
+    protected virtual void HandleError(Guid messageId, Exception exception, Action<TFailResult>? onFail = null)
     {
         _logger.LogError(
             "Message {0}, exception type {1}, exception text {2}", messageId, exception.GetType().Name, exception.Message
         );
 
-        if (exception.InnerException != null) HandleError(messageId, exception.InnerException);
+        if (exception.InnerException != null) HandleError(messageId, exception.InnerException, onFail);
     }
 }

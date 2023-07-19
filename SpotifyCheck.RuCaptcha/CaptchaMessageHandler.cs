@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
 using SpotifyCheck.Core;
+using SpotifyCheck.RuCaptcha.Exceptions;
 using SpotifyCheck.RuCaptcha.Messages.Request;
 using SpotifyCheck.RuCaptcha.Messages.Responses;
+using TimeoutException = SpotifyCheck.RuCaptcha.Exceptions.TimeoutException;
 
 namespace SpotifyCheck.RuCaptcha;
 
-public class CaptchaMessageHandler : AbstractMessageHandler<AbstractRequest, SolvedCaptchaResponse, bool>
+public class CaptchaMessageHandler : AbstractMessageHandler<AbstractRequest, SolvedCaptchaResponse, ErrorType>
 {
     private readonly CaptchaResultMessageHandler _captchaResultMessageHandler;
     private readonly ILogger<CaptchaMessageHandler> _logger;
@@ -34,8 +36,29 @@ public class CaptchaMessageHandler : AbstractMessageHandler<AbstractRequest, Sol
         );
     }
 
-    protected override void HandleError(Guid messageId, Exception exception)
+    protected override void HandleError(Guid messageId, Exception exception, Action<ErrorType>? onFail = null)
     {
-        base.HandleError(messageId, exception);
+        if (exception is TimeoutException timeoutException)
+        {
+            _logger.LogTrace("RuCaptcha requests block at {0} ms. Message id: {1}", timeoutException.DelayMs, messageId);
+            Thread.Sleep(timeoutException.DelayMs);
+            onFail?.Invoke(ErrorType.TryAgain);
+            return;
+        }
+
+        if (exception is ChangeProxyException changeProxyException)
+        {
+            _logger.LogTrace("RuCaptcha cant use proxy. Message id: {0}", messageId);
+            onFail?.Invoke(ErrorType.ChangeProxy);
+        }
+
+        if (exception is CaptchaNotRecognizedException captchaNotRecognizedException)
+        {
+            _logger.LogTrace("RuCaptcha cant recognize captcha. Message id: {0}", messageId);
+            onFail?.Invoke(ErrorType.TryAgain);
+        }
+
+        base.HandleError(messageId, exception, onFail);
+        onFail?.Invoke(ErrorType.Critical);
     }
 }

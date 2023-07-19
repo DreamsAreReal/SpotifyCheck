@@ -1,12 +1,13 @@
 using SpotifyCheck.Core;
+using SpotifyCheck.RuCaptcha.Exceptions;
 using SpotifyCheck.RuCaptcha.Messages.Responses;
 
 namespace SpotifyCheck.RuCaptcha.Messages.Request;
 
-public class GettingResultRequest : AbstractMessage<SolvedCaptchaResponse, bool>
+public class GettingResultRequest : AbstractMessage<SolvedCaptchaResponse, ErrorType>
 {
     public override Action<SolvedCaptchaResponse> OnDone { get; }
-    public override Action<bool>? OnFail { get; }
+    public override Action<ErrorType>? OnFail { get; }
     public string Id { get; }
     public ICaptcha Captcha { get; }
     public DateTime CreatedAt { get; private set; }
@@ -16,7 +17,7 @@ public class GettingResultRequest : AbstractMessage<SolvedCaptchaResponse, bool>
         DateTime createdAt,
         ICaptcha captcha,
         Action<SolvedCaptchaResponse> onDone,
-        Action<bool>? onFail = null
+        Action<ErrorType> onFail = null
     )
     {
         Id = id;
