@@ -1,6 +1,6 @@
+using SpotifyCheck.Core.Models;
 using SpotifyCheck.RuCaptcha.Exceptions;
 using SpotifyCheck.RuCaptcha.Messages.Responses;
-using SpotifyCheck.RuCaptcha.Models;
 
 namespace SpotifyCheck.RuCaptcha.Messages.Request;
 

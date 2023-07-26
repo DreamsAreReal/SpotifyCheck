@@ -7,7 +7,7 @@ namespace SpotifyCheck.RuCaptcha;
 
 public static class Startup
 {
-    public static IServiceCollection AddStartup(this IServiceCollection collection, IConfiguration configuration)
+    public static IServiceCollection AddRuCaptchaStartup(this IServiceCollection collection, IConfiguration configuration)
     {
         collection.Configure<RuCaptchaOptions>(configuration);
         collection.AddSingleton<RuCaptchaErrorCodes>();
@@ -15,5 +15,11 @@ public static class Startup
         collection.AddSingleton<CaptchaResultMessageHandler>();
         collection.AddTransient<RuCaptchaWrapper>();
         return collection;
+    }
+
+    public static IConfigurationBuilder AddRuCaptchaConfigs(this IConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.AddJsonFile("RuCaptchaOptions.json");
+        return configurationBuilder;
     }
 }
