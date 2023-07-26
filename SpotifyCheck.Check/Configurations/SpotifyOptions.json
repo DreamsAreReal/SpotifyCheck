@@ -1,0 +1,5 @@
+{
+  "SpotifyOptions": {
+    "GetSubscriptionDataUrl": "https://www.spotify.com/de/api/account/v1/datalayer/"
+  }
+}

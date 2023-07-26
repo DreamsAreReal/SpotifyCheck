@@ -1,0 +1,15 @@
+{
+  "BrowserOptions": {
+    "ProxyExtensionPath": "C:\\Users\\pc\\Projects\\SpotifyCheck\\extenisions\\foxyproxy@eric.h.jung.xpi",
+    "LaunchHeadless": true,
+    "GetProxyExtensionUrlTimeoutMs": 30000,
+    "GetProxyExtensionWindowsTimeoutMs": 30000,
+    "GetProxyFormTimeoutMs": 10000,
+    "GetProxyLoaderTimeoutMs": 10000,
+    "GetProxySelectTimeoutMs": 10000,
+    "SpotifyUrl": "https://accounts.spotify.com/en/login?continue=https%3A%2F%2Fopen.spotify.com%2F",
+    "GetSpotifyFormTimeoutMs": 10000,
+    "GetSpotifyErrorMessageMs": 30000,
+    "GetSpotifyCookieTimeoutMs": 1200000
+  }
+}
