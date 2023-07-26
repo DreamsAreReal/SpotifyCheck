@@ -20,4 +20,13 @@
         <PackageReference Include="Selenium.WebDriver.GeckoDriver" Version="0.33.0"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Update="Configurations\BrowserOptions.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Configurations\SpotifyOptions.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>
