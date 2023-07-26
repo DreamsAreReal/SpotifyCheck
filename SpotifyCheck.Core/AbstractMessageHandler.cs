@@ -37,7 +37,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
         return new Thread(
             async () =>
             {
-                _logger.LogTrace("Queue {0} listener started", GetType().Name);
+                _logger.LogTrace("Queue {ListenerName} listener started", GetType().Name);
 
                 while (true)
                 {
@@ -45,7 +45,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
                     if (!dequeued || message == null) continue;
                     if (_cancellationTokenSource.Token.IsCancellationRequested) return;
                     var timer = new Stopwatch();
-                    _logger.LogTrace("Message received {0}. Queue {2}", message.MessageId, GetType().Name);
+                    _logger.LogTrace("Message received {MessageId}. Queue {ListenerName}", message.MessageId, GetType().Name);
                     timer.Start();
 
                     try
@@ -54,14 +54,14 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
                     }
                     catch (Exception ex)
                     {
-                        HandleError(message.MessageId, ex, message.OnFail);
+                        HandleError(message, ex, message.OnFail);
                     }
 
                     timer.Stop();
 
                     _logger.LogTrace(
-                        "Completed message processing {0} at {1} ms. Queue: {2}", message.MessageId, timer.ElapsedMilliseconds,
-                        GetType().Name
+                        "Completed message processing {MessageId} at {ElapsedMilliseconds} ms. Queue: {ListenerName}",
+                        message.MessageId, timer.ElapsedMilliseconds, GetType().Name
                     );
 
                     if (DelayMs != 0) Thread.Sleep(DelayMs);
@@ -72,12 +72,13 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
 
     protected abstract Task Handle(TMessage message, CancellationToken cancellationToken);
 
-    protected virtual void HandleError(Guid messageId, Exception exception, Action<TFailResult>? onFail = null)
+    protected virtual void HandleError(TMessage message, Exception exception, Action<TFailResult>? onFail = null)
     {
         _logger.LogError(
-            "Message {0}, exception type {1}, exception text {2}", messageId, exception.GetType().Name, exception.Message
+            "Message {MessageId}, exception type {ExceptionType}, exception text {ExceptionText}", message.MessageId,
+            exception.GetType().Name, exception.Message
         );
 
-        if (exception.InnerException != null) HandleError(messageId, exception.InnerException, onFail);
+        if (exception.InnerException != null) HandleError(message, exception.InnerException, onFail);
     }
 }

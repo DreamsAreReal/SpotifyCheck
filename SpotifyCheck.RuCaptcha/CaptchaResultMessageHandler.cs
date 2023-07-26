@@ -32,7 +32,7 @@ public class CaptchaResultMessageHandler : AbstractMessageHandler<GettingResultR
 
         if (!string.IsNullOrWhiteSpace(answer))
         {
-            _logger.LogTrace("Captcha has resolved id: {0} messageId: {1}", message.Id, message.MessageId);
+            _logger.LogTrace("Captcha has resolved id: {CaptchaId} messageId: {MessageId}", message.Id, message.MessageId);
             message.OnDone(new SolvedCaptchaResponse(message.Id, answer));
             return;
         }
@@ -41,11 +41,14 @@ public class CaptchaResultMessageHandler : AbstractMessageHandler<GettingResultR
         AddToQueue(message);
     }
 
-    protected override void HandleError(Guid messageId, Exception exception, Action<ErrorType>? onFail = null)
+    protected override void HandleError(GettingResultRequest message, Exception exception, Action<ErrorType>? onFail = null)
     {
         if (exception is TimeoutException timeoutException)
         {
-            _logger.LogTrace("RuCaptcha requests block at {0} ms. Message id: {1}", timeoutException.DelayMs, messageId);
+            _logger.LogTrace(
+                "RuCaptcha requests block at {Delay} ms. Message id: {MessageId}", timeoutException.DelayMs, message.MessageId
+            );
+
             Thread.Sleep(timeoutException.DelayMs);
             onFail?.Invoke(ErrorType.TryAgain);
             return;
@@ -53,17 +56,19 @@ public class CaptchaResultMessageHandler : AbstractMessageHandler<GettingResultR
 
         if (exception is ChangeProxyException changeProxyException)
         {
-            _logger.LogTrace("RuCaptcha cant use proxy. Message id: {0}", messageId);
+            _logger.LogTrace("RuCaptcha cant use proxy. Message id: {MessageId}", message.MessageId);
             onFail?.Invoke(ErrorType.ChangeProxy);
         }
-
-        if (exception is CaptchaNotRecognizedException captchaNotRecognizedException)
+        else if (exception is CaptchaNotRecognizedException captchaNotRecognizedException)
         {
-            _logger.LogTrace("RuCaptcha cant recognize captcha. Message id: {0}", messageId);
+            _logger.LogTrace("RuCaptcha cant recognize captcha. Message id: {MessageId}", message.MessageId);
             onFail?.Invoke(ErrorType.TryAgain);
         }
+        else
+        {
+            base.HandleError(message, exception, onFail);
+        }
 
-        base.HandleError(messageId, exception, onFail);
         onFail?.Invoke(ErrorType.Critical);
     }
 }

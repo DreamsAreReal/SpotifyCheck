@@ -9,7 +9,7 @@ public static class Startup
 {
     public static IServiceCollection AddRuCaptchaStartup(this IServiceCollection collection, IConfiguration configuration)
     {
-        collection.Configure<RuCaptchaOptions>(configuration);
+        collection.Configure<RuCaptchaOptions>(configuration.GetSection("RuCaptchaOptions"));
         collection.AddSingleton<RuCaptchaErrorCodes>();
         collection.AddSingleton<CaptchaMessageHandler>();
         collection.AddSingleton<CaptchaResultMessageHandler>();

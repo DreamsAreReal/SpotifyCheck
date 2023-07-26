@@ -32,13 +32,13 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
         options.PageLoadStrategy = PageLoadStrategy.Eager;
         _driver = new FirefoxDriver(options);
         _driver.InstallAddOnFromFile(_browserOptions.ProxyExtensionPath);
-        _logger.LogTrace("{0} | Browser init", taskId);
+        _logger.LogTrace("{TaskId} | Browser init", taskId);
     }
 
     public void SetProxy(Guid taskId, Proxy? proxy)
     {
         if (proxy == null) return;
-        _logger.LogTrace("{0} | Set proxy", taskId);
+        _logger.LogTrace("{TaskId} | Set proxy", taskId);
         var handles = _driver.WindowHandles;
         var dateTimeNowTmp = DateTime.Now;
 
@@ -51,7 +51,7 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
             Thread.Sleep(10);
         }
 
-        _logger.LogTrace("{0} | Windows received", taskId);
+        _logger.LogTrace("{TaskId} | Windows received", taskId);
         _driver.SwitchTo().Window(_driver.WindowHandles[1]);
         dateTimeNowTmp = DateTime.Now;
 
@@ -63,9 +63,9 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
             Thread.Sleep(10);
         }
 
-        _logger.LogTrace("{0} | Extension url received", taskId);
+        _logger.LogTrace("{TaskId} | Extension url received", taskId);
         _driver.Navigate().GoToUrl($"moz-extension://{_driver.Url.Split('/')[2]}/proxy.html");
-        _logger.LogTrace("{0} | Set proxy data", taskId);
+        _logger.LogTrace("{TaskId} | Set proxy data", taskId);
         var proxyFormWait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetProxyFormTimeoutMs));
         var proxyIp = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyAddress")));
         var proxyPort = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyPort")));
@@ -113,23 +113,23 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
 
         var selectProxy = new SelectElement(proxyChange);
         selectProxy.SelectByIndex(selectProxy.Options.Count - 1);
-        _logger.LogTrace("{0} | Proxy set", taskId);
+        _logger.LogTrace("{TaskId} | Proxy set", taskId);
     }
 
     public ReadOnlyCollection<Cookie>? Login(Guid taskId, string login, string password)
     {
-        _logger.LogTrace("{0} | Go to spotify url", taskId);
+        _logger.LogTrace("{TaskId} | Go to spotify url", taskId);
         _driver.Navigate().GoToUrl(_browserOptions.SpotifyUrl);
 
         if (_driver.PageSource.Contains("Too Many Requests"))
         {
-            _logger.LogDebug("{0} | Spotify: Too Many Requests", taskId);
+            _logger.LogDebug("{TaskId} | Spotify: Too Many Requests", taskId);
             throw new ChangeProxyException();
         }
 
         if (_driver.PageSource.Contains("403 Forbidden"))
         {
-            _logger.LogDebug("{0} | Spotify: 403 Forbidden", taskId);
+            _logger.LogDebug("{TaskId} | Spotify: 403 Forbidden", taskId);
             throw new ChangeProxyException();
         }
 
@@ -140,7 +140,7 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
         loginInput.SendKeys(login);
         passwordInput.SendKeys(password);
         loginButton.Click();
-        _logger.LogTrace("{0} | Try login", taskId);
+        _logger.LogTrace("{TaskId} | Try login", taskId);
 
         var errorMessageWait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetSpotifyErrorMessageMs))
         {
@@ -160,7 +160,7 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
             {
                 if (wrongLogin.Text.Contains("Oops! Something went wrong"))
                 {
-                    _logger.LogDebug("{0} | Spotify: Oops! Something went wrong", taskId);
+                    _logger.LogDebug("{TaskId} | Spotify: Oops! Something went wrong", taskId);
                     throw new ChangeProxyException();
                 }
 
@@ -189,7 +189,7 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
             Thread.Sleep(10);
         } while (!cookies.Any(x => x.Name.Contains("sp_dc")));
 
-        _logger.LogTrace("{0} | Cookie received", taskId);
+        _logger.LogTrace("{TaskId} | Cookie received", taskId);
         var result = new List<Cookie>();
         foreach (var t in cookies) result.Add(new Cookie(t.Name, t.Value, t.Path, t.Domain));
         return result.AsReadOnly();
