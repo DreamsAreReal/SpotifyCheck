@@ -6,7 +6,7 @@ using SpotifyCheck.Core.Models;
 
 namespace SpotifyCheck.Check;
 
-public abstract class AbstractSpotifyWrapper
+public abstract class AbstractSpotifyWrapper : IDisposable
 {
     private readonly SpotifyOptions _spotifyOptions;
 
@@ -15,6 +15,8 @@ public abstract class AbstractSpotifyWrapper
         _spotifyOptions = spotifyOptions;
     }
 
+    public abstract void Dispose();
+
     public abstract Task<IReadOnlyCollection<Cookie>?> GetAuthorizationCookies(
         Guid taskId,
         string login,
@@ -22,7 +24,7 @@ public abstract class AbstractSpotifyWrapper
         Proxy? proxy = null
     );
 
-    public virtual async Task<Subscription?> GetSubscriptionData(IReadOnlyCollection<Cookie> cookies, Proxy? proxy = null)
+    public async Task<Subscription?> GetSubscriptionData(IReadOnlyCollection<Cookie> cookies, Proxy? proxy = null)
     {
         var httpHandler = new HttpClientHandler
         {
@@ -31,7 +33,7 @@ public abstract class AbstractSpotifyWrapper
 
         if (proxy != null)
         {
-            var webProxy = new WebProxy($"{proxy.GetTypeNameForHttpClient()}://{proxy.Login}:{proxy.Password}", false);
+            var webProxy = new WebProxy($"{proxy.GetTypeNameForHttpClient()}://{proxy.Address}:{proxy.Port}", false);
 
             if (!string.IsNullOrWhiteSpace(proxy.Login) && !string.IsNullOrWhiteSpace(proxy.Password))
                 webProxy.Credentials = new NetworkCredential(proxy.Login, proxy.Password);

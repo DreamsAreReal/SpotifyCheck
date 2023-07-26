@@ -30,4 +30,9 @@ public class BrowserSpotifyWrapper : AbstractSpotifyWrapper
         _browserAuthorizationWrapper.Dispose();
         return Task.FromResult<IReadOnlyCollection<Cookie>?>(result);
     }
+
+    public override void Dispose()
+    {
+        _browserAuthorizationWrapper.Dispose();
+    }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,7 +13,7 @@ using InvalidDataException = SpotifyCheck.Check.Exceptions.InvalidDataException;
 
 namespace SpotifyCheck;
 
-public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, AccountSuccess, Account>
+public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, AccountSuccess, AccountError>
 {
     private readonly AppOptions _appOptions;
     private readonly ILogger<WorkerMessageHandler> _logger;
@@ -46,35 +47,53 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
         CancellationToken ctx
     )
     {
-        if (ctx.IsCancellationRequested)
+        var timer = new Stopwatch();
+        timer.Start();
+
+        try
         {
-            semaphoreSlim.Release();
-            return;
+            if (ctx.IsCancellationRequested)
+            {
+                semaphoreSlim.Release();
+                return;
+            }
+
+            var proxyDequeue = _proxies.TryDequeue(out var proxy);
+            while (!proxyDequeue) proxyDequeue = _proxies.TryDequeue(out proxy);
+            workerContext.Proxy = proxy;
+
+            var cookies = await wrapper!.GetAuthorizationCookies(
+                workerContext.MessageId, workerContext.Account.Login, workerContext.Account.Password, proxy
+            );
+
+            if (cookies == null) return;
+            var subscription = await wrapper!.GetSubscriptionData(cookies, proxy);
+
+            if (subscription != null && ((subscription.IsSubAccount != null && subscription.IsSubAccount.Value) ||
+                                         (subscription.IsTrialUser != null && subscription.IsTrialUser.Value) ||
+                                         (subscription.DaysLeft != null && subscription.DaysLeft.Value > 0)))
+                workerContext.OnDone(new AccountSuccess(workerContext.Account, true));
+            else
+                workerContext.OnDone(new AccountSuccess(workerContext.Account, false));
         }
+        catch (Exception ex)
+        {
+            HandleError(workerContext, ex, workerContext.OnFail);
+        }
+        finally
+        {
+            wrapper.Dispose();
+            timer.Stop();
 
-        workerContext.SemaphoreSlim = semaphoreSlim;
-        var proxyDequeue = _proxies.TryDequeue(out var proxy);
-        while (!proxyDequeue) proxyDequeue = _proxies.TryDequeue(out proxy);
-        workerContext.Proxy = proxy;
+            _logger.LogDebug(
+                "Check at {ElapsedMilliseconds} ms, MessageId = {MessageId}", timer.ElapsedMilliseconds, workerContext.MessageId
+            );
 
-        var cookies = await wrapper!.GetAuthorizationCookies(
-            workerContext.MessageId, workerContext.Account.Login, workerContext.Account.Password, proxy
-        );
-
-        if (cookies == null) return;
-        var subscription = await wrapper!.GetSubscriptionData(cookies, proxy);
-
-        if (subscription != null && ((subscription.IsSubAccount != null && subscription.IsSubAccount.Value) ||
-                                     (subscription.IsTrialUser != null && subscription.IsTrialUser.Value) ||
-                                     (subscription.DaysLeft != null && subscription.DaysLeft.Value > 0)))
-            workerContext.OnDone(new AccountSuccess(workerContext.Account, true));
-        else
-            workerContext.OnDone(new AccountSuccess(workerContext.Account, false));
-
-        semaphoreSlim.Release();
+            semaphoreSlim.Release();
+        }
     }
 
-    protected override void HandleError(WorkerContext message, Exception exception, Action<Account>? onFail = null)
+    protected override void HandleError(WorkerContext message, Exception exception, Action<AccountError>? onFail = null)
     {
         if (exception is ChangeProxyException)
         {
@@ -98,12 +117,11 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
         else if (exception is UnknownException ex)
         {
             _logger.LogError("{MessageId} | {Message} | {PageSource}", message.MessageId, ex.Message, ex.PageSource);
+            message.OnFail?.Invoke(new AccountError(message.Account, message.MessageId));
         }
         else
         {
             base.HandleError(message, exception, onFail);
         }
-
-        message.SemaphoreSlim.Release();
     }
 }

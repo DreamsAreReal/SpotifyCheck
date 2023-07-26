@@ -23,7 +23,7 @@
 
     <ItemGroup>
         <None Update="Configurations\BrowserOptions.json">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="Configurations\SpotifyOptions.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SpotifyCheck.Configurations;
+using SpotifyCheck.DataReaders;
 
 namespace SpotifyCheck;
 
@@ -10,6 +11,8 @@ public static class Startup
     {
         collection.Configure<AppOptions>(configuration.GetSection("AppOptions"));
         collection.AddSingleton<WorkerMessageHandler>();
+        collection.AddTransient<ProxyDataReader>();
+        collection.AddTransient<AccountDataReader>();
         return collection;
     }
 

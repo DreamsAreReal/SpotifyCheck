@@ -1,5 +1,7 @@
 {
   "AppOptions": {
-    "MaxThreads": 1
+    "MaxThreads": 2,
+    "ProxiesPath": "Proxies",
+    "AccountsPath": "Accounts"
   }
 }

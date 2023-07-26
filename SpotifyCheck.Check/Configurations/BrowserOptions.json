@@ -1,7 +1,7 @@
 {
   "BrowserOptions": {
     "ProxyExtensionPath": "C:\\Users\\pc\\Projects\\SpotifyCheck\\extenisions\\foxyproxy@eric.h.jung.xpi",
-    "LaunchHeadless": true,
+    "LaunchHeadless": false,
     "GetProxyExtensionUrlTimeoutMs": 30000,
     "GetProxyExtensionWindowsTimeoutMs": 30000,
     "GetProxyFormTimeoutMs": 10000,
