@@ -1,4 +1,4 @@
-namespace SpotifyCheck.RuCaptcha.Configuration;
+namespace SpotifyCheck.RuCaptcha.Configurations;
 
 public class RuCaptchaOptions
 {

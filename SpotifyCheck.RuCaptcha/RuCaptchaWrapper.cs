@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using SpotifyCheck.RuCaptcha.Configuration;
+using SpotifyCheck.RuCaptcha.Configurations;
 using SpotifyCheck.RuCaptcha.Exceptions;
 using SpotifyCheck.RuCaptcha.Messages.Request;
 

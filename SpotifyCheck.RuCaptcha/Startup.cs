@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using SpotifyCheck.RuCaptcha.Configuration;
+using SpotifyCheck.RuCaptcha.Configurations;
 using SpotifyCheck.RuCaptcha.Exceptions;
 
 namespace SpotifyCheck.RuCaptcha;
