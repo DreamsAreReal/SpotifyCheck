@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyCheck", "SpotifyChec
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyCheck.RuCaptcha", "SpotifyCheck.RuCaptcha\SpotifyCheck.RuCaptcha.csproj", "{E42ED11C-C07D-4099-9BA1-3F0B987E31A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpotifyCheck.Check", "SpotifyCheck.Check\SpotifyCheck.Check.csproj", "{35E188B7-A5C0-42EE-8487-394EF261A9D9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{E42ED11C-C07D-4099-9BA1-3F0B987E31A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E42ED11C-C07D-4099-9BA1-3F0B987E31A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E42ED11C-C07D-4099-9BA1-3F0B987E31A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35E188B7-A5C0-42EE-8487-394EF261A9D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35E188B7-A5C0-42EE-8487-394EF261A9D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35E188B7-A5C0-42EE-8487-394EF261A9D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35E188B7-A5C0-42EE-8487-394EF261A9D9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
