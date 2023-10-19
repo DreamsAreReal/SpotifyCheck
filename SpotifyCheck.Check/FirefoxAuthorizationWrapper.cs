@@ -26,9 +26,12 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
 
     public void InitBrowser(Guid taskId)
     {
-        var firefox = new FirefoxProfile();
-        var options = new FirefoxOptions { Profile = firefox };
-        if (_browserOptions.LaunchHeadless) options.AddArgument("-headless");
+        FirefoxProfile firefox = new FirefoxProfile();
+        FirefoxOptions options = new FirefoxOptions { Profile = firefox };
+
+        if (_browserOptions.LaunchHeadless)
+            options.AddArgument("-headless");
+
         options.PageLoadStrategy = PageLoadStrategy.Eager;
         _driver = new FirefoxDriver(options);
         _driver.InstallAddOnFromFile(_browserOptions.ProxyExtensionPath);
@@ -37,10 +40,12 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
 
     public void SetProxy(Guid taskId, Proxy? proxy)
     {
-        if (proxy == null) return;
+        if (proxy == null)
+            return;
+
         _logger.LogTrace("{TaskId} | Set proxy", taskId);
-        var handles = _driver.WindowHandles;
-        var dateTimeNowTmp = DateTime.Now;
+        ReadOnlyCollection<string>? handles = _driver.WindowHandles;
+        DateTime dateTimeNowTmp = DateTime.Now;
 
         while (handles.Count < 2)
         {
@@ -66,22 +71,26 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
         _logger.LogTrace("{TaskId} | Extension url received", taskId);
         _driver.Navigate().GoToUrl($"moz-extension://{_driver.Url.Split('/')[2]}/proxy.html");
         _logger.LogTrace("{TaskId} | Set proxy data", taskId);
-        var proxyFormWait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetProxyFormTimeoutMs));
-        var proxyIp = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyAddress")));
-        var proxyPort = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyPort")));
-        var proxyLogin = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyUsername")));
-        var proxyPassword = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyPassword")));
-        var proxyType = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyType")));
-        var proxySubmit = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("button[type=\"submit\"]")));
+
+        WebDriverWait proxyFormWait = new WebDriverWait(
+            _driver, TimeSpan.FromMilliseconds(_browserOptions.GetProxyFormTimeoutMs)
+        );
+
+        IWebElement? proxyIp = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyAddress")));
+        IWebElement? proxyPort = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyPort")));
+        IWebElement? proxyLogin = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyUsername")));
+        IWebElement? proxyPassword = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyPassword")));
+        IWebElement? proxyType = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("#proxyType")));
+        IWebElement? proxySubmit = proxyFormWait.Until(_driver => _driver.FindElement(By.CssSelector("button[type=\"submit\"]")));
         proxyIp.SendKeys(proxy.Address);
         proxyPort.SendKeys(proxy.Port);
         proxyLogin.SendKeys(proxy.Login);
         proxyPassword.SendKeys(proxy.Password);
-        var selectElement = new SelectElement(proxyType);
+        SelectElement selectElement = new SelectElement(proxyType);
         selectElement.SelectByIndex((int)proxy.Type);
         proxySubmit.Click();
 
-        var loaderWait =
+        WebDriverWait loaderWait =
             new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetProxyLoaderTimeoutMs))
             {
                 PollingInterval = TimeSpan.FromMilliseconds(10)
@@ -89,7 +98,7 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
 
         loaderWait.IgnoreExceptionTypes(typeof(NoSuchElementException));
 
-        var spinner = loaderWait.Until(
+        IWebElement? spinner = loaderWait.Until(
             _driver =>
             {
                 // Need because selenium throw exception at few cases
@@ -104,14 +113,15 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
             }
         );
 
-        while (spinner != null && spinner?.GetAttribute("style") != "display: none;") Thread.Sleep(10);
+        while (spinner != null && spinner?.GetAttribute("style") != "display: none;")
+            Thread.Sleep(10);
 
-        var proxyChange =
+        IWebElement? proxyChange =
             new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetProxySelectTimeoutMs)).Until(
                 _driver => _driver.FindElement(By.CssSelector("#selectAndSync select"))
             );
 
-        var selectProxy = new SelectElement(proxyChange);
+        SelectElement selectProxy = new SelectElement(proxyChange);
         selectProxy.SelectByIndex(selectProxy.Options.Count - 1);
         _logger.LogTrace("{TaskId} | Proxy set", taskId);
     }
@@ -133,27 +143,28 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
             throw new ChangeProxyException();
         }
 
-        var formWait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetSpotifyFormTimeoutMs));
-        var loginInput = formWait.Until(_driver => _driver.FindElement(By.CssSelector("#login-username")));
-        var passwordInput = formWait.Until(_driver => _driver.FindElement(By.CssSelector("#login-password")));
-        var loginButton = formWait.Until(_driver => _driver.FindElement(By.CssSelector("#login-button")));
+        WebDriverWait formWait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetSpotifyFormTimeoutMs));
+        IWebElement? loginInput = formWait.Until(_driver => _driver.FindElement(By.CssSelector("#login-username")));
+        IWebElement? passwordInput = formWait.Until(_driver => _driver.FindElement(By.CssSelector("#login-password")));
+        IWebElement? loginButton = formWait.Until(_driver => _driver.FindElement(By.CssSelector("#login-button")));
         loginInput.SendKeys(login);
         passwordInput.SendKeys(password);
         loginButton.Click();
         _logger.LogTrace("{TaskId} | Try login", taskId);
 
-        var errorMessageWait = new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetSpotifyErrorMessageMs))
-        {
-            PollingInterval = TimeSpan.FromMilliseconds(10)
-        };
+        WebDriverWait errorMessageWait =
+            new WebDriverWait(_driver, TimeSpan.FromMilliseconds(_browserOptions.GetSpotifyErrorMessageMs))
+            {
+                PollingInterval = TimeSpan.FromMilliseconds(10)
+            };
 
         errorMessageWait.IgnoreExceptionTypes(typeof(NoSuchElementException));
         ReadOnlyCollection<OpenQA.Selenium.Cookie>? cookies;
-        var tmpDateTime = DateTime.Now;
+        DateTime tmpDateTime = DateTime.Now;
 
         do
         {
-            var wrongLogin =
+            IWebElement? wrongLogin =
                 errorMessageWait.Until(drv => drv.FindElement(By.CssSelector("div[data-encore-id=\"banner\" ] span")));
 
             if (DateTime.Now - tmpDateTime > TimeSpan.FromMilliseconds(_browserOptions.GetSpotifyCookieTimeoutMs))
@@ -190,8 +201,11 @@ public class FirefoxAuthorizationWrapper : IBrowserAuthorizationWrapper
         } while (!cookies.Any(x => x.Name.Contains("sp_dc")));
 
         _logger.LogTrace("{TaskId} | Cookie received", taskId);
-        var result = new List<Cookie>();
-        foreach (var t in cookies) result.Add(new Cookie(t.Name, t.Value, t.Path, t.Domain));
+        List<Cookie> result = new List<Cookie>();
+
+        foreach (OpenQA.Selenium.Cookie t in cookies)
+            result.Add(new Cookie(t.Name, t.Value, t.Path, t.Domain));
+
         return result.AsReadOnly();
     }
 

@@ -27,8 +27,10 @@ public class CaptchaMessageHandler : AbstractMessageHandler<AbstractRequest, Sol
 
     protected override async Task Handle(AbstractRequest message, CancellationToken cancellationToken)
     {
-        if (message is not ICaptcha captcha) return;
-        var id = await _ruCaptchaWrapper.SendToResolve(captcha);
+        if (message is not ICaptcha captcha)
+            return;
+
+        string id = await _ruCaptchaWrapper.SendToResolve(captcha);
         _logger.LogTrace("Captcha send to getting results id: {CaptchaId} messageId: {MessageId}", id, message.MessageId);
 
         _captchaResultMessageHandler.AddToQueue(

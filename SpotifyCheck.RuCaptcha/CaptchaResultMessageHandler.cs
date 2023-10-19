@@ -23,12 +23,12 @@ public class CaptchaResultMessageHandler : AbstractMessageHandler<GettingResultR
 
     protected override async Task Handle(GettingResultRequest message, CancellationToken cancellationToken)
     {
-        var pastTimeMs = DateTime.Now.Subtract(message.CreatedAt);
+        TimeSpan pastTimeMs = DateTime.Now.Subtract(message.CreatedAt);
 
         if (DateTime.Now.Subtract(message.CreatedAt) < TimeSpan.FromMilliseconds(message.Captcha.DelayToGetResultMs))
             Thread.Sleep(TimeSpan.FromMilliseconds(message.Captcha.DelayToGetResultMs).Subtract(pastTimeMs));
 
-        var answer = await _ruCaptchaWrapper.GetResult(message.Id);
+        string? answer = await _ruCaptchaWrapper.GetResult(message.Id);
 
         if (!string.IsNullOrWhiteSpace(answer))
         {

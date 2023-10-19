@@ -17,12 +17,15 @@ public class RuCaptchaErrorCodes
 
     internal void ThrowExceptionIfRecognizeError(string response)
     {
-        if (response.Contains(_captchaCantRecognize)) throw new CaptchaNotRecognizedException();
-        if (_needChangeProxy.Any(x => response.Contains(x))) throw new ChangeProxyException();
+        if (response.Contains(_captchaCantRecognize))
+            throw new CaptchaNotRecognizedException();
+
+        if (_needChangeProxy.Any(x => response.Contains(x)))
+            throw new ChangeProxyException();
 
         if (_notCriticalWithTimeouts.Any(x => response.Contains(x.Key)))
         {
-            var timeout = _notCriticalWithTimeouts.Where(x => response.Contains(x.Key)).Select(x => x.Value).FirstOrDefault();
+            int timeout = _notCriticalWithTimeouts.Where(x => response.Contains(x.Key)).Select(x => x.Value).FirstOrDefault();
             throw new TimeoutException(timeout);
         }
     }

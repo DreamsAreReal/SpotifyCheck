@@ -11,7 +11,7 @@ public class AccountDataReader : AbstractDataReader<Account>
 
     protected override (bool, Account) Process(string text)
     {
-        var data = text.Split(':');
+        string[] data = text.Split(':');
 
         if (data.Length != 2)
         {

@@ -12,8 +12,8 @@ public class ProxyDataReader : AbstractDataReader<Proxy>
 
     protected override (bool, Proxy) Process(string text)
     {
-        var regex = new Regex("(.*):\\/\\/(.*):(.*)@(.*):(.*)").Match(text);
-        var typeParsed = Enum.TryParse(regex.Groups[1].Value, true, out ProxyType type);
+        Match regex = new Regex("(.*):\\/\\/(.*):(.*)@(.*):(.*)").Match(text);
+        bool typeParsed = Enum.TryParse(regex.Groups[1].Value, true, out ProxyType type);
 
         if (!typeParsed)
         {

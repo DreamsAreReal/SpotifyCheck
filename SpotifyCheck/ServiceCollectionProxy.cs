@@ -6,7 +6,9 @@ public static class ServiceCollectionProxy
 
     public static void SetServiceProvider(IServiceProvider provider)
     {
-        if (Provider != null) throw new Exception("Provider set");
+        if (Provider != null)
+            throw new Exception("Provider set");
+
         Provider = provider;
     }
 }

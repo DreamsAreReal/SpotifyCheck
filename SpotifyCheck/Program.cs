@@ -5,31 +5,40 @@ using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using SpotifyCheck;
 using SpotifyCheck.Check;
+using SpotifyCheck.Core.Models;
 using SpotifyCheck.DataReaders;
 using SpotifyCheck.Models;
 
-var configuration = new ConfigurationBuilder().SetBasePath($"{Directory.GetCurrentDirectory()}\\Configurations").AddConfigs()
-    .AddSpotifyConfigs().Build();
+IConfigurationRoot configuration = new ConfigurationBuilder().SetBasePath($"{Directory.GetCurrentDirectory()}\\Configurations")
+    .AddConfigs()
+    .AddSpotifyConfigs()
+    .Build();
 
-var services = new ServiceCollection().AddStartup(configuration).AddSpotifyStartup(configuration).AddLogging(
-    loggingBuilder =>
-    {
-        loggingBuilder.ClearProviders();
-        loggingBuilder.SetMinimumLevel(LogLevel.Trace);
-        loggingBuilder.AddNLog(configuration);
-    }
-).BuildServiceProvider();
+ServiceProvider services = new ServiceCollection().AddStartup(configuration)
+    .AddSpotifyStartup(configuration)
+    .AddLogging(
+        loggingBuilder =>
+        {
+            loggingBuilder.ClearProviders();
+            loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+            loggingBuilder.AddNLog(configuration);
+        }
+    )
+    .BuildServiceProvider();
 
 ServiceCollectionProxy.SetServiceProvider(services);
-var logger = services.GetService<ILogger<Program>>();
-var workerMessageHandler = services.GetService<WorkerMessageHandler>();
-var proxiesPath = configuration.GetSection("AppOptions:ProxiesPath").Value;
-var proxyDataReader = services.GetService<ProxyDataReader>();
-await foreach (var proxy in proxyDataReader!.Read(proxiesPath!)) workerMessageHandler!.AddProxy(proxy);
-var accountsPath = configuration.GetSection("AppOptions:AccountsPath").Value;
-var accountDataReader = services.GetService<AccountDataReader>();
+ILogger<Program>? logger = services.GetService<ILogger<Program>>();
+WorkerMessageHandler? workerMessageHandler = services.GetService<WorkerMessageHandler>();
+string? proxiesPath = configuration.GetSection("AppOptions:ProxiesPath").Value;
+ProxyDataReader? proxyDataReader = services.GetService<ProxyDataReader>();
 
-await foreach (var account in accountDataReader!.Read(accountsPath!))
+await foreach (Proxy proxy in proxyDataReader!.Read(proxiesPath!))
+    workerMessageHandler!.AddProxy(proxy);
+
+string? accountsPath = configuration.GetSection("AppOptions:AccountsPath").Value;
+AccountDataReader? accountDataReader = services.GetService<AccountDataReader>();
+
+await foreach (Account account in accountDataReader!.Read(accountsPath!))
     workerMessageHandler!.AddToQueue(new WorkerContext(account, success => OnDone(success), error => OnFail(error)));
 
 void OnDone(AccountSuccess accountSuccess)

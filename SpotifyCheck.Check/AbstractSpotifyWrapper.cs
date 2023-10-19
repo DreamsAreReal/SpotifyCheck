@@ -26,14 +26,14 @@ public abstract class AbstractSpotifyWrapper : IDisposable
 
     public async Task<Subscription?> GetSubscriptionData(IReadOnlyCollection<Cookie> cookies, Proxy? proxy = null)
     {
-        var httpHandler = new HttpClientHandler
+        HttpClientHandler httpHandler = new HttpClientHandler
         {
             AllowAutoRedirect = true, UseCookies = true, CookieContainer = new CookieContainer()
         };
 
         if (proxy != null)
         {
-            var webProxy = new WebProxy($"{proxy.GetTypeNameForHttpClient()}://{proxy.Address}:{proxy.Port}", false);
+            WebProxy webProxy = new WebProxy($"{proxy.GetTypeNameForHttpClient()}://{proxy.Address}:{proxy.Port}", false);
 
             if (!string.IsNullOrWhiteSpace(proxy.Login) && !string.IsNullOrWhiteSpace(proxy.Password))
                 webProxy.Credentials = new NetworkCredential(proxy.Login, proxy.Password);
@@ -42,10 +42,12 @@ public abstract class AbstractSpotifyWrapper : IDisposable
             httpHandler.UseProxy = true;
         }
 
-        foreach (var cookie in cookies) httpHandler.CookieContainer.Add(cookie);
-        var httpClient = new HttpClient(httpHandler);
-        var response = await httpClient.GetAsync(_spotifyOptions.GetSubscriptionDataUrl);
-        var responseText = await response.Content.ReadAsStringAsync();
+        foreach (Cookie cookie in cookies)
+            httpHandler.CookieContainer.Add(cookie);
+
+        HttpClient httpClient = new HttpClient(httpHandler);
+        HttpResponseMessage response = await httpClient.GetAsync(_spotifyOptions.GetSubscriptionDataUrl);
+        string responseText = await response.Content.ReadAsStringAsync();
         return JsonSerializer.Deserialize<Subscription>(responseText);
     }
 }

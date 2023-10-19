@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SpotifyCheck.Check;
 using SpotifyCheck.Check.Exceptions;
+using SpotifyCheck.Check.Models;
 using SpotifyCheck.Configurations;
 using SpotifyCheck.Core;
 using SpotifyCheck.Core.Models;
@@ -36,8 +38,14 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
     protected override async Task Handle(WorkerContext message, CancellationToken cancellationToken)
     {
         await _semaphoreSlim.WaitAsync(cancellationToken);
-        var spotifyWrapper = ServiceCollectionProxy.Provider.GetService<AbstractSpotifyWrapper>();
-        new Thread(async () => { await HandleMessage(spotifyWrapper!, message, _semaphoreSlim, cancellationToken); }).Start();
+        AbstractSpotifyWrapper? spotifyWrapper = ServiceCollectionProxy.Provider.GetService<AbstractSpotifyWrapper>();
+
+        new Thread(
+            async () =>
+            {
+                await HandleMessage(spotifyWrapper!, message, _semaphoreSlim, cancellationToken);
+            }
+        ).Start();
     }
 
     private async Task HandleMessage(
@@ -47,7 +55,7 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
         CancellationToken ctx
     )
     {
-        var timer = new Stopwatch();
+        Stopwatch timer = new();
         timer.Start();
 
         try
@@ -58,16 +66,21 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
                 return;
             }
 
-            var proxyDequeue = _proxies.TryDequeue(out var proxy);
-            while (!proxyDequeue) proxyDequeue = _proxies.TryDequeue(out proxy);
+            bool proxyDequeue = _proxies.TryDequeue(out Proxy? proxy);
+
+            while (!proxyDequeue)
+                proxyDequeue = _proxies.TryDequeue(out proxy);
+
             workerContext.Proxy = proxy;
 
-            var cookies = await wrapper!.GetAuthorizationCookies(
+            IReadOnlyCollection<Cookie>? cookies = await wrapper!.GetAuthorizationCookies(
                 workerContext.MessageId, workerContext.Account.Login, workerContext.Account.Password, proxy
             );
 
-            if (cookies == null) return;
-            var subscription = await wrapper!.GetSubscriptionData(cookies, proxy);
+            if (cookies == null)
+                return;
+
+            Subscription? subscription = await wrapper!.GetSubscriptionData(cookies, proxy);
 
             if (subscription != null && ((subscription.IsSubAccount != null && subscription.IsSubAccount.Value) ||
                                          (subscription.IsTrialUser != null && subscription.IsTrialUser.Value) ||
@@ -103,7 +116,9 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
             );
 
             AddToQueue(new WorkerContext(message.Account, message.OnDone, message.OnFail));
-            if (message.Proxy != null) AddProxy(message.Proxy);
+
+            if (message.Proxy != null)
+                AddProxy(message.Proxy);
         }
         else if (exception is InvalidDataException)
         {
@@ -112,7 +127,8 @@ public class WorkerMessageHandler : AbstractMessageHandler<WorkerContext, Accoun
                 message.MessageId
             );
 
-            if (message.Proxy != null) AddProxy(message.Proxy);
+            if (message.Proxy != null)
+                AddProxy(message.Proxy);
         }
         else if (exception is UnknownException ex)
         {

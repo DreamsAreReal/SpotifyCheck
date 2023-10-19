@@ -41,10 +41,15 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
 
                 while (true)
                 {
-                    var dequeued = _messages.TryDequeue(out var message);
-                    if (!dequeued || message == null) continue;
-                    if (_cancellationTokenSource.Token.IsCancellationRequested) return;
-                    var timer = new Stopwatch();
+                    bool dequeued = _messages.TryDequeue(out TMessage? message);
+
+                    if (!dequeued || message == null)
+                        continue;
+
+                    if (_cancellationTokenSource.Token.IsCancellationRequested)
+                        return;
+
+                    Stopwatch timer = new();
                     _logger.LogTrace("Message received {MessageId}. Queue {ListenerName}", message.MessageId, GetType().Name);
                     timer.Start();
 
@@ -64,7 +69,8 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
                         message.MessageId, timer.ElapsedMilliseconds, GetType().Name
                     );
 
-                    if (DelayMs != 0) Thread.Sleep(DelayMs);
+                    if (DelayMs != 0)
+                        Thread.Sleep(DelayMs);
                 }
             }
         );
@@ -79,6 +85,7 @@ public abstract class AbstractMessageHandler<TMessage, TDoneResult, TFailResult>
             exception.GetType().Name, exception.Message
         );
 
-        if (exception.InnerException != null) HandleError(message, exception.InnerException, onFail);
+        if (exception.InnerException != null)
+            HandleError(message, exception.InnerException, onFail);
     }
 }

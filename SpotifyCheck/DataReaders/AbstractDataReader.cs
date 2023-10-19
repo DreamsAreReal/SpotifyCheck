@@ -20,19 +20,21 @@ public abstract class AbstractDataReader<T>
         }
 
         Logger.LogTrace("Get files in storage {storage}", storage);
-        var filePaths = Directory.GetFiles(storage, "*.txt");
+        string[] filePaths = Directory.GetFiles(storage, "*.txt");
 
-        foreach (var path in filePaths)
+        foreach (string path in filePaths)
         {
             Logger.LogTrace("Read file {filePaths}", filePaths);
 
-            using (var reader = new StreamReader(path))
+            using (StreamReader reader = new(path))
             {
                 while (await reader.ReadLineAsync() is { } line)
                 {
                     Logger.LogTrace("Read line {line}", line);
-                    var data = Process(line)!;
-                    if (data.Item1) yield return data.Item2;
+                    (bool, T) data = Process(line)!;
+
+                    if (data.Item1)
+                        yield return data.Item2;
                 }
             }
         }

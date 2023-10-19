@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Collections.ObjectModel;
+using System.Net;
 using Microsoft.Extensions.Options;
 using SpotifyCheck.Check.Configurations;
 using SpotifyCheck.Core.Models;
@@ -26,7 +27,7 @@ public class BrowserSpotifyWrapper : AbstractSpotifyWrapper
     {
         _browserAuthorizationWrapper.InitBrowser(taskId);
         _browserAuthorizationWrapper.SetProxy(taskId, proxy);
-        var result = _browserAuthorizationWrapper.Login(taskId, login, password);
+        ReadOnlyCollection<Cookie>? result = _browserAuthorizationWrapper.Login(taskId, login, password);
         _browserAuthorizationWrapper.Dispose();
         return Task.FromResult<IReadOnlyCollection<Cookie>?>(result);
     }

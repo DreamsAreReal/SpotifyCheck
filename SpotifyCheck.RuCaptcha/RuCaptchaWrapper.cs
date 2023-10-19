@@ -30,25 +30,34 @@ public class RuCaptchaWrapper : IDisposable
 
     public async Task<string> SendToResolve(ICaptcha captcha)
     {
-        var response = await _client.PostAsync(
+        HttpResponseMessage response = await _client.PostAsync(
             _inboxUrl, new FormUrlEncodedContent(captcha.ToDictionary().Union(_additionalParameters))
         );
 
-        var result = await response.Content.ReadAsStringAsync();
+        string result = await response.Content.ReadAsStringAsync();
         _ruCaptchaErrorCodes.ThrowExceptionIfRecognizeError(result);
-        var answerTmp = result.Split('|');
-        if (answerTmp.Length < 2) throw new Exception(result);
+        string[] answerTmp = result.Split('|');
+
+        if (answerTmp.Length < 2)
+            throw new Exception(result);
+
         return answerTmp[1];
     }
 
     public async Task<string?> GetResult(string id)
     {
-        var response = await _client.GetAsync($"{_outboxUrl}?action=get&id={id}{_additionalQuery}");
-        var result = await response.Content.ReadAsStringAsync();
+        HttpResponseMessage response = await _client.GetAsync($"{_outboxUrl}?action=get&id={id}{_additionalQuery}");
+        string result = await response.Content.ReadAsStringAsync();
         _ruCaptchaErrorCodes.ThrowExceptionIfRecognizeError(result);
-        if (result.Contains(RuCaptchaErrorCodes.CaptchaNotReady)) return null;
-        var answerTmp = result.Split('|');
-        if (answerTmp.Length < 2) throw new Exception(result);
+
+        if (result.Contains(RuCaptchaErrorCodes.CaptchaNotReady))
+            return null;
+
+        string[] answerTmp = result.Split('|');
+
+        if (answerTmp.Length < 2)
+            throw new Exception(result);
+
         return answerTmp[1];
     }
 }

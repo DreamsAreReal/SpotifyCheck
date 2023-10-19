@@ -33,7 +33,7 @@ public class ReCaptchaV3Request : AbstractRequest, ICaptcha
 
     public Dictionary<string, string> ToDictionary()
     {
-        var parameters = new Dictionary<string, string>
+        Dictionary<string, string> parameters = new Dictionary<string, string>
         {
             { "method", Method },
             { "version", Version },
